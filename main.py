@@ -1,6 +1,5 @@
 import argparse
 import datetime
-import json
 import logging
 import os
 import platform
@@ -11,9 +10,8 @@ import time
 from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
-import dotenv
 import requests
 from dotenv import load_dotenv
 

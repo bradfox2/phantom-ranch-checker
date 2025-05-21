@@ -4,15 +4,15 @@ After=network.target
 
 [Service]
 Type=simple
-User=YOUR_USERNAME
-WorkingDirectory=/path/to/phantom-ranch-checker
-ExecStart=/usr/bin/python3 /path/to/phantom-ranch-checker/phantom_ranch_checker.py --cookies-file phantom_ranch_cookies.txt --sms-notify --phone-number 4802422587 --carrier tmobile --email-from bradfox2@gmail.com --email-user bradfox2@gmail.com --email-password ${EMAIL_PASSWORD}
+User=brad
+WorkingDirectory=/home/brad/Projects/phantom_ranch_scraper
+ExecStart=/home/brad/Projects/phantom_ranch_scraper/launch.sh
 
 # Environment settings
 Environment=PATH=/usr/bin:/usr/local/bin
-EnvironmentFile=/path/to/phantom-ranch-checker/phantom-ranch.env
-StandardOutput=append:/path/to/phantom-ranch-checker/service-output.log
-StandardError=append:/path/to/phantom-ranch-checker/service-error.log
+EnvironmentFile=/home/brad/Projects/phantom_ranch_scraper/phantom-ranch.env
+StandardOutput=append:/home/brad/Projects/phantom_ranch_scraper/service-output.log
+StandardError=append:/home/brad/Projects/phantom_ranch_scraper/service-error.log
 
 # Restart on failure (after 1 minute to avoid hammering the server if there's an issue)
 Restart=on-failure

@@ -1,6 +1,7 @@
 import argparse
 import datetime
 import logging
+import logging.handlers
 import os
 import platform
 import smtplib
@@ -69,15 +70,22 @@ class NotificationManager:
         elif system == "Windows":
             try:
                 # We'll use Windows Toast Notifications (if installed)
-                import win10toast
+                # Attempt to import win10toast, but don't fail if it's not there
+                try:
+                    import win10toast
 
-                self.win10toast = win10toast.ToastNotifier()
-                logger.info("Desktop notifications available (Windows)")
-            except ImportError:
+                    self.win10toast = win10toast.ToastNotifier()
+                    logger.info("Desktop notifications available (Windows)")
+                except ImportError:
+                    logger.warning(
+                        "Desktop notifications require win10toast package on Windows. "
+                        "Install with: pip install win10toast"
+                    )
+                    self.enable_desktop = False
+            except Exception as e:  # General exception for other potential issues
                 logger.warning(
-                    "Desktop notifications require win10toast package on Windows"
+                    f"Could not initialize Windows desktop notifications: {e}"
                 )
-                logger.info("Install with: pip install win10toast")
                 self.enable_desktop = False
         else:
             logger.warning(f"Desktop notifications not supported on {system}")
@@ -224,15 +232,26 @@ It will check ALL available dates by default and notify you when anything become
 
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.FileHandler("phantom_ranch_checker.log"),
-        logging.StreamHandler(sys.stdout),
-    ],
+log_formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+log_file = "phantom_ranch_checker.log"
+
+# Use a rotating file handler
+# Rotate logs when they reach 10MB, keep 5 backup logs
+file_handler = logging.handlers.RotatingFileHandler(
+    log_file, maxBytes=10 * 1024 * 1024, backupCount=5
 )
+file_handler.setFormatter(log_formatter)
+
+# Also log to stdout
+stream_handler = logging.StreamHandler(sys.stdout)
+stream_handler.setFormatter(log_formatter)
+
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+logger.addHandler(file_handler)
+logger.addHandler(stream_handler)
+# Prevent duplicate logging to root logger if basicConfig was called elsewhere
+logger.propagate = False
 
 
 class PhantomRanchChecker:
@@ -247,7 +266,7 @@ class PhantomRanchChecker:
         check_interval: int = 3600,
         nights: int = 2,
         people_per_room: int = 4,
-        cookies: str = None,
+        cookies: Optional[str] = None,
         notification_manager: Optional["NotificationManager"] = None,
     ):
         """
@@ -387,7 +406,7 @@ class PhantomRanchChecker:
 
             return {"success": False, "error": str(e)}
 
-    def _parse_cookie_string(self, cookie_string: str) -> Dict[str, str]:
+    def _parse_cookie_string(self, cookie_string: Optional[str]) -> Dict[str, str]:
         """Parse a cookie string from a curl command into a dictionary."""
         cookies = {}
         if not cookie_string:
@@ -577,7 +596,7 @@ def parse_date(date_str: str) -> datetime:
         raise ValueError(f"Invalid date format: {date_str}. Use MM/DD/YYYY format.")
 
 
-def extract_cookies_from_curl(curl_command: str) -> str:
+def extract_cookies_from_curl(curl_command: str) -> Optional[str]:
     """Extract cookie string from a curl command."""
     if not curl_command or "-b" not in curl_command:
         return None

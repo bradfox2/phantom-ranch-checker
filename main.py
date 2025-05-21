@@ -1,3 +1,25 @@
+import argparse
+import datetime
+import json
+import logging
+import os
+import platform
+import smtplib
+import subprocess
+import sys
+import time
+from datetime import datetime, timedelta
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from typing import Any, Dict, List, Optional, Tuple
+
+import dotenv
+import requests
+from dotenv import load_dotenv
+
+load_dotenv("phantom-ranch.env")
+
+
 class NotificationManager:
     """Class to handle various notification methods when availability is found."""
 
@@ -202,22 +224,6 @@ This script continuously checks for accommodations availability at Phantom Ranch
 It will check ALL available dates by default and notify you when anything becomes available.
 """
 
-import argparse
-import datetime
-import json
-import logging
-import os
-import platform
-import smtplib
-import subprocess
-import sys
-import time
-from datetime import datetime, timedelta
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from typing import Any, Dict, List, Optional, Tuple
-
-import requests
 
 # Configure logging
 logging.basicConfig(
@@ -687,7 +693,10 @@ def main():
         "--email-user", type=str, help="SMTP username for email notifications"
     )
     parser.add_argument(
-        "--email-password", type=str, help="SMTP password for email notifications"
+        "--email-password",
+        type=str,
+        help="SMTP password for email notifications",
+        default=os.getenv("EMAIL_PASSWORD"),
     )
     parser.add_argument(
         "--sms-notify",
